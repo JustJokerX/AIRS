@@ -43,28 +43,28 @@ void DEWidget::CreateObjects()
 //    m_pWorld->addRigidBody(pRigidBody);
 
 // create a ground plane
-CreateGameObject(new btBoxShape(btVector3(1,100,100)), 0, btVector3(0.2f, 0.6f, 0.6f), btVector3(0.0f, 0.0f, 0.0f));
+CreateGameObject(new btBoxShape(btVector3(50,1,50)), 0, btVector3(0.2f, 0.6f, 0.6f), btVector3(0.0f, 0.0f, 0.0f));
 
-//// create our original red box
-//CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(1.0f, 0.2f, 0.2f), btVector3(0.0f, 5.0f, 0.0f));
+// create our original red box
+CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(1.0f, 0.2f, 0.2f), btVector3(0.0f, 5.0f, 0.0f));
 
-//// create a blue box
-//CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(0.0f, 0.2f, 0.8f), btVector3(1.25f, 10.0f, 0.0f));
+// create a blue box
+CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(0.0f, 0.2f, 0.8f), btVector3(1.25f, 10.0f, 0.0f));
 
-//// create a green box
-//CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(0.2f, 0.8f, 0.2f), btVector3(0.75f, 15.0f, 0.0f));
+// create a green box
+CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(0.2f, 0.8f, 0.2f), btVector3(0.75f, 15.0f, 0.0f));
 
-for(int i=0;i<10;++i){
-    for(int j=0;j<10;++j){
-        for(int k=0;k<10;++k){
-            if((i+j+k)%2==0){
-                CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(1.0f, 0.2f, 0.2f), btVector3(-5.0f+2*i, 1000.0f+2*j, 0.0f+2*k));
-            }else{
-                CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(0.2f, 0.2f, 1.0f), btVector3(-5.0f+2*i, 1000.0f+2*j, 0.0f+2*k));
-            }
-
-        }
-    }
-}
+//for(int i=0;i<10;++i){
+//    for(int j=0;j<10;++j){
+//        for(int k=0;k<10;++k){
+//            if((i+j+k)%2==0){
+//                CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(1.0f, 0.2f, 0.2f), btVector3(-5.0f+2*i, 1000.0f+2*j, 0.0f+2*k));
+//            }else{
+//                CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(0.2f, 0.2f, 1.0f), btVector3(-5.0f+2*i, 1000.0f+2*j, 0.0f+2*k));
+//            }
+//
+//        }
+//    }
+//}
 
 }

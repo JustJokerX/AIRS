@@ -6,9 +6,9 @@
 
 OGLWidget::OGLWidget(QWidget *parent)
     : QOpenGLWidget(parent),
-    m_cameraPosition(10.0f, 5.0f, 0.0f),
+    m_cameraPosition(0.0f, 5.0f, 0.0f),
     m_cameraTarget(0.0f, 0.0f, 0.0f),
-    m_cameraDistance(50.0f),
+    m_cameraDistance(20.0f),
     m_cameraPitch(20.0f),
     m_cameraYaw(0.0f),
     m_upVector(0.0f, 1.0f, 0.0f),
