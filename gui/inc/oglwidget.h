@@ -17,6 +17,12 @@
 // a convenient typedef to reference an STL vector of GameObjects
 typedef std::vector<GameObject*> GameObjects;
 
+// struct to store our raycasting results
+struct RayResult{
+    btRigidBody* pBody;
+    btVector3 hitPoint;
+};
+
 class OGLWidget : public QOpenGLWidget
 {
 public:
@@ -24,6 +30,8 @@ public:
     ~OGLWidget();
     // camera functions
     void keyPressEvent(QKeyEvent *event);           //处理键盘按下事件
+    void mousePressEvent(QMouseEvent *event);       //鼠标按下事件
+    void mouseMoveEvent(QMouseEvent *event);        //鼠标移动事件
     void initializeGL();
 
     // rendering. Can be overrideen by derived classes
@@ -54,6 +62,13 @@ public:
             const btVector3 &color = btVector3(1.0f,1.0f,1.0f),
             const btVector3 &initialPosition = btVector3(0.0f,0.0f,0.0f),
             const btQuaternion &initialRotation = btQuaternion(0,0,1,0));
+
+    void ShootBox(const btVector3 &direction);
+    void DestroyGameObject(btRigidBody* pBody);
+// picking functions
+    btVector3 GetPickingRay(int x, int y);
+    bool Raycast(const btVector3 &startPosition, const btVector3 &direction, RayResult &output);
+
 protected:
     float m_cameraDistance; // distance from the camera to its target
     float m_cameraPitch; // pitch of the camera
@@ -91,6 +106,15 @@ protected:
 
     // debug renderer
     DebugDrawer* m_pDebugDrawer;
+
+    // pick point
+    float m_pick_x;
+    float m_pick_y;
+
+    // mouse now point
+    float m_move_x;
+    float m_move_y;
+
 };
 
 #endif // OGLWIDGET_H

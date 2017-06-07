@@ -1,3 +1,4 @@
+#include <iostream>
 #include "oglwidget.h"
 
 // Some constants for 3D math and the camera speed
@@ -20,9 +21,13 @@ OGLWidget::OGLWidget(QWidget *parent)
     m_pDispatcher(0),
     m_pSolver(0),
     m_pWorld(0),
-    m_fullscreen(false)
+    m_fullscreen(false),
+    m_pick_x(0),
+    m_pick_y(0),
+    m_move_x(0),
+    m_move_y(0)
 {
-
+    this->setMouseTracking(true);
 }
 
 OGLWidget::~OGLWidget()
@@ -225,6 +230,20 @@ void OGLWidget::ZoomCamera(float distance)
     UpdateCamera();
 }
 
+void OGLWidget::mouseMoveEvent(QMouseEvent *event) {
+    m_move_x=event->pos().x();
+    m_move_y=event->pos().y();
+}
+
+void OGLWidget::mousePressEvent(QMouseEvent *event) {
+    if (event->button()==Qt::RightButton){
+        ShootBox(GetPickingRay(event->pos().x(),event->pos().y()));
+    }
+    else if(event->button()==Qt::LeftButton){
+        m_pick_x=event->pos().x();
+        m_pick_y=event->pos().y();
+    }
+}
 
 void OGLWidget::keyPressEvent(QKeyEvent *event)
 {
@@ -270,6 +289,17 @@ void OGLWidget::keyPressEvent(QKeyEvent *event)
         m_pDebugDrawer->ToggleDebugFlag(btIDebugDraw::DBG_DrawAabb);
         break;
 
+    case Qt::Key_D:
+        {
+            // create a temp object to store the raycast result
+            RayResult result;
+            // perform the raycast
+            if (!Raycast(m_cameraPosition,GetPickingRay(m_move_x,m_move_y),result))
+                return;
+            // destroy the corresponding game object
+            DestroyGameObject(result.pBody);
+            break;
+        }
     case Qt::Key_Left:
         RotateCamera(m_cameraYaw, +CAMERA_STEP_SIZE);
         break;
@@ -449,3 +479,109 @@ GameObject *OGLWidget::CreateGameObject(btCollisionShape *pShape, const float &m
     }
     return pObject;
 }
+
+void OGLWidget::ShootBox(const btVector3 &direction) {
+// create a new box object
+    GameObject* pObject = CreateGameObject(new btBoxShape(btVector3(1, 1, 1)), 1, btVector3(0.4f, 0.f, 0.4f), m_cameraPosition);
+
+// calculate the velocity
+    btVector3 velocity = direction;
+    velocity.normalize();
+    velocity *= 25.0f;
+
+// set the linear velocity of the box
+    pObject->GetRigidBody()->setLinearVelocity(velocity);
+}
+
+void OGLWidget::DestroyGameObject(btRigidBody *pBody) {
+// we need to search through the objects in order to
+// find the corresponding iterator (can only erase from
+// an std::vector by passing an iterator)
+    for (GameObjects::iterator iter = m_objects.begin(); iter != m_objects.end(); ++iter) {
+        if ((*iter)->GetRigidBody() == pBody) {
+            GameObject* pObject = *iter;
+            // remove the rigid body from the world
+            m_pWorld->removeRigidBody(pObject->GetRigidBody());
+            // erase the object from the list
+            m_objects.erase(iter);
+            // delete the object from memory
+            delete pObject;
+            // done
+            return;
+        }
+    }
+}
+
+btVector3 OGLWidget::GetPickingRay(int x, int y) {
+    // calculate the field-of-view
+    float tanFov = 1.0f / m_nearPlane;
+    float fov = btScalar(2.0) * btAtan(tanFov);
+// get a ray pointing forward from the
+// camera and extend it to the far plane
+    btVector3 rayFrom = m_cameraPosition;
+    btVector3 rayForward = (m_cameraTarget - m_cameraPosition);
+    rayForward.normalize();
+    rayForward*= m_farPlane;
+// find the horizontal and vertical vectors
+// relative to the current camera view
+    btVector3 ver = m_upVector;
+    btVector3 hor = rayForward.cross(ver);
+    hor.normalize();
+    ver = hor.cross(rayForward);
+    ver.normalize();
+    hor *= 2.f * m_farPlane * tanFov;
+    ver *= 2.f * m_farPlane * tanFov;
+// calculate the aspect ratio
+    btScalar aspect = m_screenWidth / (btScalar)m_screenHeight;
+// adjust the forward-ray based on
+// the X/Y coordinates that were clicked
+    hor*=aspect;
+    btVector3 rayToCenter = rayFrom + rayForward;
+    btVector3 dHor = hor * 1.f/float(m_screenWidth);
+    btVector3 dVert = ver * 1.f/float(m_screenHeight);
+    btVector3 rayTo = rayToCenter - 0.5f * hor + 0.5f * ver;
+    rayTo += btScalar(x) * dHor;
+    rayTo -= btScalar(y) * dVert;
+// return the final result
+    return rayTo;
+}
+
+bool OGLWidget::Raycast(const btVector3 &startPosition, const btVector3 &direction, RayResult &output) {
+    if (!m_pWorld)
+        return false;
+
+// get the picking ray from where we clicked
+    btVector3 rayTo = direction;
+    btVector3 rayFrom = m_cameraPosition;
+
+// create our raycast callback object
+    btCollisionWorld::ClosestRayResultCallback rayCallback(rayFrom,rayTo);
+
+// perform the raycast
+    m_pWorld->rayTest(rayFrom,rayTo,rayCallback);
+
+// did we hit something?
+    if (rayCallback.hasHit())
+    {
+        // if so, get the rigid body we hit
+        btRigidBody* pBody = (btRigidBody*)btRigidBody::upcast(rayCallback.m_collisionObject);
+        if (!pBody)
+            return false;
+
+        // prevent us from picking objects
+        // like the ground plane
+        if (pBody->isStaticObject() || pBody->isKinematicObject())
+            return false;
+
+        // set the result data
+        output.pBody = pBody;
+        output.hitPoint = rayCallback.m_hitPointWorld;
+        return true;
+    }
+// we didn't hit anything
+    return false;
+}
+
+
+
+
