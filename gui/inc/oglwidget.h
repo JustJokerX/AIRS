@@ -1,5 +1,6 @@
 #ifndef OGLWIDGET_H
 #define OGLWIDGET_H
+#include <vector>
 #include <QDebug>
 #include <QWidget>
 #include <QKeyEvent>
@@ -11,7 +12,7 @@
 // include our custom Motion State object
 #include "openglmotionstate.h"
 #include "GameObject.h"
-#include <vector>
+#include "DebugDrawer.h"
 
 // a convenient typedef to reference an STL vector of GameObjects
 typedef std::vector<GameObject*> GameObjects;
@@ -60,6 +61,8 @@ protected:
 
     bool m_Light;
 
+//temp added
+    bool m_fullscreen;
     // camera control
     btVector3 m_cameraPosition; // the camera's current position
     btVector3 m_cameraTarget;	 // the camera's lookAt target
@@ -85,6 +88,9 @@ protected:
 
     // an array of our game objects
     GameObjects m_objects;
+
+    // debug renderer
+    DebugDrawer* m_pDebugDrawer;
 };
 
 #endif // OGLWIDGET_H

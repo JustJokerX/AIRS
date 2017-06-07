@@ -26,21 +26,6 @@ void DEWidget::ShutdownPhysics() {
 
 void DEWidget::CreateObjects()
 {
-//    // create a box shape of size (1,1,1)
-//    btBoxShape* pBoxShape = new btBoxShape(btVector3(1.0f, 1.0f, 1.0f));
-//    // give our box an initial position of (0,0,0)
-//    btTransform transform;
-//    transform.setIdentity();
-//    transform.setOrigin(btVector3(0.0f, 0.0f, 0.0f));
-//    // create a motion state
-//    m_pMotionState = new OpenGLMotionState(transform);
-//    // create the rigid body construction info object, giving it a
-//    // mass of 1, the motion state, and the shape
-//    btRigidBody::btRigidBodyConstructionInfo rbInfo(1.0f, m_pMotionState, pBoxShape);
-//    btRigidBody* pRigidBody = new btRigidBody(rbInfo);
-//    // inform our world that we just created a new rigid body for
-//    // it to manage
-//    m_pWorld->addRigidBody(pRigidBody);
 
 // create a ground plane
 CreateGameObject(new btBoxShape(btVector3(50,1,50)), 0, btVector3(0.2f, 0.6f, 0.6f), btVector3(0.0f, 0.0f, 0.0f));
@@ -53,18 +38,5 @@ CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(0.0f, 0.2f, 0.
 
 // create a green box
 CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(0.2f, 0.8f, 0.2f), btVector3(0.75f, 15.0f, 0.0f));
-
-//for(int i=0;i<10;++i){
-//    for(int j=0;j<10;++j){
-//        for(int k=0;k<10;++k){
-//            if((i+j+k)%2==0){
-//                CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(1.0f, 0.2f, 0.2f), btVector3(-5.0f+2*i, 1000.0f+2*j, 0.0f+2*k));
-//            }else{
-//                CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(0.2f, 0.2f, 1.0f), btVector3(-5.0f+2*i, 1000.0f+2*j, 0.0f+2*k));
-//            }
-//
-//        }
-//    }
-//}
 
 }

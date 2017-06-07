@@ -19,7 +19,8 @@ OGLWidget::OGLWidget(QWidget *parent)
     m_pCollisionConfiguration(0),
     m_pDispatcher(0),
     m_pSolver(0),
-    m_pWorld(0)
+    m_pWorld(0),
+    m_fullscreen(false)
 {
 
 }
@@ -66,6 +67,12 @@ void OGLWidget::initializeGL()
     glClearColor(0.6, 0.65, 0.85, 0);
     // initialize the physics system
     InitializePhysics();
+	// create the debug drawer
+    m_pDebugDrawer = new DebugDrawer();
+    // set the initial debug level to 0
+    m_pDebugDrawer->setDebugMode(0);
+    // add the debug drawer to the world
+    m_pWorld->setDebugDrawer(m_pDebugDrawer);
 }
 
 void OGLWidget::paintGL()
@@ -235,6 +242,18 @@ void OGLWidget::keyPressEvent(QKeyEvent *event)
         }
         break;
 
+    //OpenGL Widget fullscreen
+    case Qt::Key_F2:
+        m_fullscreen=!m_fullscreen;
+        if (m_fullscreen){
+            setWindowFlags(Qt::Window);
+            showFullScreen();
+        } else{
+            setWindowFlags(Qt::SubWindow);
+            showNormal();
+        }
+        break;
+
     case Qt::Key_Z:
         ZoomCamera(+CAMERA_STEP_SIZE);
         break;
@@ -243,21 +262,33 @@ void OGLWidget::keyPressEvent(QKeyEvent *event)
         ZoomCamera(-CAMERA_STEP_SIZE);
         break;
 
+    case Qt::Key_W:
+        m_pDebugDrawer->ToggleDebugFlag(btIDebugDraw::DBG_DrawWireframe);
+        break;
+
+    case Qt::Key_B:
+        m_pDebugDrawer->ToggleDebugFlag(btIDebugDraw::DBG_DrawAabb);
+        break;
+
     case Qt::Key_Left:
         RotateCamera(m_cameraYaw, +CAMERA_STEP_SIZE);
         break;
+
     case Qt::Key_Right:
         RotateCamera(m_cameraYaw, -CAMERA_STEP_SIZE);
         break;
+
     case Qt::Key_Up:
         RotateCamera(m_cameraPitch, +CAMERA_STEP_SIZE);
         break;
+
     case Qt::Key_Down:
         RotateCamera(m_cameraPitch, -CAMERA_STEP_SIZE);
         break;
 
     }
 }
+
 
 //void OGLWidget::DrawBox(const btVector3 &halfSize, const btVector3 &color) {
 void OGLWidget::DrawBox(const btVector3 &halfSize) {
@@ -271,6 +302,7 @@ void OGLWidget::DrawBox(const btVector3 &halfSize) {
     float halfDepth = halfSize.z();
 
     // set the object's color
+
     //glColor3f(color.x(), color.y(), color.z());
 
     // create the vertex positions
@@ -355,6 +387,11 @@ void OGLWidget::RenderScene() {
         // get data from the object and draw it
         DrawShape(transform, pObj->GetShape(), pObj->GetColor());
     }
+
+    // after rendering all game objects, perform debug rendering
+    // Bullet will figure out what needs to be drawn then call to
+    // our DebugDrawer class to do the rendering for us
+    m_pWorld->debugDrawWorld();
 }
 
 void OGLWidget::UpdateScene(float dt) {
