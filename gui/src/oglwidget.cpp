@@ -28,7 +28,10 @@ OGLWidget::OGLWidget(QWidget *parent)
     m_move_y(0),
     m_frame(0),
     m_fps(60.0),
-    m_1_fps(0.16666)
+    m_1_fps(0.16666),
+    m_pPickedBody(0),
+    m_pPickConstraint(0),
+    m_bpick(false)
 {
     this->setMouseTracking(true);
     m_1_fps=1.0f/m_fps;
@@ -102,7 +105,7 @@ void OGLWidget::paintGL()
         if (m_frame<int(10*m_fps)){
             m_frame++;
             float fps=(m_frame/dt_f)+1;
-            printf("fps:%.1f;\n",fps);
+            //printf("fps:%.1f;\n",fps);
         }else{
             m_frame=0;
             m_clock_frame.reset();
@@ -246,6 +249,8 @@ void OGLWidget::ZoomCamera(float distance)
 void OGLWidget::mouseMoveEvent(QMouseEvent *event) {
     m_move_x=event->pos().x();
     m_move_y=event->pos().y();
+    // Only effective when it is picked
+    Motion(m_move_x,m_move_y);
 }
 
 void OGLWidget::mousePressEvent(QMouseEvent *event) {
@@ -253,10 +258,20 @@ void OGLWidget::mousePressEvent(QMouseEvent *event) {
         ShootBox(GetPickingRay(event->pos().x(),event->pos().y()));
     }
     else if(event->button()==Qt::LeftButton){
-        m_pick_x=event->pos().x();
-        m_pick_y=event->pos().y();
+        // create the picking constraint when we click the LMB
+        CreatePickingConstraint(event->pos().x(),event->pos().y());
+        m_bpick = true;
     }
 }
+
+void OGLWidget::mouseReleaseEvent(QMouseEvent *event) {
+    if((event->button()==Qt::LeftButton) and (true == m_bpick) ){
+        // remove the picking constraint when we release the LMB
+        RemovePickingConstraint();
+        m_bpick= false;
+    }
+}
+
 
 void OGLWidget::keyPressEvent(QKeyEvent *event)
 {
@@ -597,6 +612,88 @@ bool OGLWidget::Raycast(const btVector3 &startPosition, const btVector3 &directi
     return false;
 }
 
+void OGLWidget::CreatePickingConstraint(int x, int y) {
+    if (!m_pWorld)
+        return;
+    // perform a raycast and return if it fails
+    RayResult output;
+    if (!Raycast(m_cameraPosition, GetPickingRay(x, y), output))
+        return;
+    // store the body for future reference
+    m_pPickedBody = output.pBody;
+    // prevent the picked object from falling asleep
+    m_pPickedBody->setActivationState(DISABLE_DEACTIVATION);
+    // get the hit position relative to the body we hit
+    btVector3 localPivot = m_pPickedBody->getCenterOfMassTransform().inverse() * output.hitPoint;
+    // create a transform for the pivot point
+    btTransform pivot;
+    pivot.setIdentity();
+    pivot.setOrigin(localPivot);
+    // create our constraint object
+    btGeneric6DofConstraint* dof6 = new btGeneric6DofConstraint(*m_pPickedBody, pivot, true);
+    bool bLimitAngularMotion = true;
+    if (bLimitAngularMotion) {
+        dof6->setAngularLowerLimit(btVector3(0,0,0));
+        dof6->setAngularUpperLimit(btVector3(0,0,0));
+    }
+    // add the constraint to the world
+    m_pWorld->addConstraint(dof6,true);
+    // store a pointer to our constraint
+    m_pPickConstraint = dof6;
+    // define the 'strength' of our constraint (each axis)
+    float cfm = 0.5f;
+    dof6->setParam(BT_CONSTRAINT_STOP_CFM,cfm,0);
+    dof6->setParam(BT_CONSTRAINT_STOP_CFM,cfm,1);
+    dof6->setParam(BT_CONSTRAINT_STOP_CFM,cfm,2);
+    dof6->setParam(BT_CONSTRAINT_STOP_CFM,cfm,3);
+    dof6->setParam(BT_CONSTRAINT_STOP_CFM,cfm,4);
+    dof6->setParam(BT_CONSTRAINT_STOP_CFM,cfm,5);
+    // define the 'error reduction' of our constraint (each axis)
+    float erp = 0.5f;
+    dof6->setParam(BT_CONSTRAINT_STOP_ERP,erp,0);
+    dof6->setParam(BT_CONSTRAINT_STOP_ERP,erp,1);
+    dof6->setParam(BT_CONSTRAINT_STOP_ERP,erp,2);
+    dof6->setParam(BT_CONSTRAINT_STOP_ERP,erp,3);
+    dof6->setParam(BT_CONSTRAINT_STOP_ERP,erp,4);
+    dof6->setParam(BT_CONSTRAINT_STOP_ERP,erp,5);
+    // save this data for future reference
+    m_oldPickingDist  = (output.hitPoint - m_cameraPosition).length();
+}
 
+void OGLWidget::RemovePickingConstraint() {
+    // exit in erroneous situations
+    if (!m_pPickConstraint || !m_pWorld)
+        return;
+    // remove the constraint from the world
+    m_pWorld->removeConstraint(m_pPickConstraint);
+    // delete the constraint object
+    delete m_pPickConstraint;
+    // reactivate the body
+    m_pPickedBody->forceActivationState(ACTIVE_TAG);
+    m_pPickedBody->setDeactivationTime( 0.f );
+    // clear the pointers
+    m_pPickConstraint = 0;
+}
+
+
+void OGLWidget::Motion(int x, int y) {
+    // did we pick a body with the LMB?
+    if (m_pPickedBody) {
+        btGeneric6DofConstraint* pickCon = static_cast<btGeneric6DofConstraint*>(m_pPickConstraint);
+        if (!pickCon)
+            return;
+
+        // use another picking ray to get the target direction
+        btVector3 dir = GetPickingRay(x,y) - m_cameraPosition;
+        dir.normalize();
+
+        // use the same distance as when we originally picked the object
+        dir *= m_oldPickingDist;
+        btVector3 newPivot = m_cameraPosition + dir;
+
+        // set the position of the constraint
+        pickCon->getFrameOffsetA().setOrigin(newPivot);
+    }
+}
 
 

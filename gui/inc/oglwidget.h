@@ -32,6 +32,7 @@ public:
     void keyPressEvent(QKeyEvent *event);           //处理键盘按下事件
     void mousePressEvent(QMouseEvent *event);       //鼠标按下事件
     void mouseMoveEvent(QMouseEvent *event);        //鼠标移动事件
+    void mouseReleaseEvent(QMouseEvent *event);     //鼠标释放事件
 
     // do init
     void initializeGL();
@@ -48,6 +49,7 @@ public:
     // physics functions. Can be overriden by derived classes (like BasicDemo)
     virtual void InitializePhysics() {}
     virtual void ShutdownPhysics() {}
+    virtual void Motion(int x, int y);
 
     // camera functions
     void UpdateCamera();
@@ -70,6 +72,10 @@ public:
 // picking functions
     btVector3 GetPickingRay(int x, int y);
     bool Raycast(const btVector3 &startPosition, const btVector3 &direction, RayResult &output);
+
+    // constraint functions
+    void CreatePickingConstraint(int x, int y);
+    void RemovePickingConstraint();
 
 protected:
     float m_cameraDistance; // distance from the camera to its target
@@ -109,6 +115,13 @@ protected:
     // debug renderer
     DebugDrawer* m_pDebugDrawer;
 
+    // constraint variables
+    btRigidBody* m_pPickedBody;				// the body we picked up
+    btTypedConstraint*  m_pPickConstraint;	// the constraint the body is attached to
+    btScalar m_oldPickingDist;				// the distance from the camera to the hit point (so we can move the object up, down, left and right from our view)
+
+    // pick bool
+    bool m_bpick;
     // pick point
     float m_pick_x;
     float m_pick_y;
