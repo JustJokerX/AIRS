@@ -32,6 +32,8 @@ public:
     void keyPressEvent(QKeyEvent *event);           //处理键盘按下事件
     void mousePressEvent(QMouseEvent *event);       //鼠标按下事件
     void mouseMoveEvent(QMouseEvent *event);        //鼠标移动事件
+
+    // do init
     void initializeGL();
 
     // rendering. Can be overrideen by derived classes
@@ -100,7 +102,7 @@ protected:
 
     // a simple clock for counting time
     btClock m_clock;
-
+    btClock m_clock_frame;
     // an array of our game objects
     GameObjects m_objects;
 
@@ -115,6 +117,14 @@ protected:
     float m_move_x;
     float m_move_y;
 
+    // frame
+    int m_frame;
+
+    // fps
+    float m_fps;
+
+    // 1/fps
+    float m_1_fps;
 };
 
 #endif // OGLWIDGET_H

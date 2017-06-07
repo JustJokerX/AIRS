@@ -25,9 +25,13 @@ OGLWidget::OGLWidget(QWidget *parent)
     m_pick_x(0),
     m_pick_y(0),
     m_move_x(0),
-    m_move_y(0)
+    m_move_y(0),
+    m_frame(0),
+    m_fps(60.0),
+    m_1_fps(0.16666)
 {
     this->setMouseTracking(true);
+    m_1_fps=1.0f/m_fps;
 }
 
 OGLWidget::~OGLWidget()
@@ -35,7 +39,6 @@ OGLWidget::~OGLWidget()
     // shutdown the physics system
     ShutdownPhysics();
 }
-
 
 
 void OGLWidget::initializeGL()
@@ -90,25 +93,34 @@ void OGLWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // get the time since the last iteration
-    float dt = m_clock.getTimeMilliseconds();
+    float dt = m_clock.getTimeMicroseconds()/1.0e6; //turns us to s
+    float dt_f=m_clock_frame.getTimeMilliseconds()/1.0e3; //turns ms to s
     // reset the clock to 0
-    m_clock.reset();
-    // update the scene (convert ms to s)
-    UpdateScene(dt / 100.0f);
+    if(dt>m_1_fps){
+        // update the scene (convert ms to s)
+        UpdateScene(dt);
+        if (m_frame<int(10*m_fps)){
+            m_frame++;
+            float fps=(m_frame/dt_f)+1;
+            printf("fps:%.1f;\n",fps);
+        }else{
+            m_frame=0;
+            m_clock_frame.reset();
+        }
+        m_clock.reset();
+    }
+
     // update the camera
     UpdateCamera();
-
-//    // draw a simple box of size 1
-//    // also draw it red
-//    DrawBox(btVector3(1, 1, 1), btVector3(1.0f, 0.2f, 0.2f));
 
     // render the scene
     RenderScene();
     update();
+    //std::cout<<"update"<<std::endl;
     //parentWidget()->update();
+    //std::cout<<"parent->update"<<std::endl;
+
 }
-
-
 
 void OGLWidget::resizeGL(int w, int h)
 {
@@ -137,6 +149,7 @@ void OGLWidget::resizeGL(int w, int h)
     // looking
     gluLookAt(m_cameraPosition[0], m_cameraPosition[1], m_cameraPosition[2], m_cameraTarget[0], m_cameraTarget[1], m_cameraTarget[2], m_upVector.getX(), m_upVector.getY(), m_upVector.getZ());
     // the view matrix is now set
+
 }
 
 void OGLWidget::UpdateCamera()
@@ -152,7 +165,7 @@ void OGLWidget::UpdateCamera()
     // determine the aspect ratio of the screen
     float aspectRatio = m_screenWidth / (float)m_screenHeight;
     // create a viewing frustum based on the aspect ratio and the
-    // boundaries of the camera
+    // boundaries of the cameara
     glFrustum (-aspectRatio * m_nearPlane, aspectRatio * m_nearPlane, -m_nearPlane, m_nearPlane, m_nearPlane, m_farPlane);
     // the projection matrix is now set
 
@@ -261,17 +274,18 @@ void OGLWidget::keyPressEvent(QKeyEvent *event)
         }
         break;
 
-    //OpenGL Widget fullscreen
-    case Qt::Key_F2:
-        m_fullscreen=!m_fullscreen;
-        if (m_fullscreen){
-            setWindowFlags(Qt::Window);
-            showFullScreen();
-        } else{
-            setWindowFlags(Qt::SubWindow);
-            showNormal();
-        }
-        break;
+    //OpenGL Widget fullscreen // have some bugs
+//    case Qt::Key_F2:
+//        m_fullscreen=!m_fullscreen;
+//        if (m_fullscreen){
+//            setWindowFlags(Qt::Window);
+//            showFullScreen();
+//        }
+//        else{
+//            setWindowFlags(Qt::SubWindow);
+//            showNormal();
+//        }
+//        break;
 
     case Qt::Key_Z:
         ZoomCamera(+CAMERA_STEP_SIZE);
@@ -430,7 +444,8 @@ void OGLWidget::UpdateScene(float dt) {
         // step the simulation through time. This is called
         // every update and the amount of elasped time was
         // determined back in ::paintGL() by our clock object.
-        m_pWorld->stepSimulation(dt);
+        int sub_step=m_pWorld->stepSimulation(dt,1,m_1_fps);
+        // std::cout<<"substeps:"<<sub_step<<std::endl;
     }
 }
 
