@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <QKeyEvent>
 #include <QOpenGLWidget>
+#include <QtGui/QPainter>
 #include <GL/glu.h>
 #include <GL/gl.h>
 #include <bullet/btBulletDynamicsCommon.h>
@@ -130,14 +131,14 @@ protected:
     float m_move_x;
     float m_move_y;
 
-    // frame
-    int m_frame;
-
     // fps
     float m_fps;
 
     // 1/fps
     float m_1_fps;
+
+    // now fps
+    float FPS;
 };
 
 #endif // OGLWIDGET_H

@@ -26,7 +26,6 @@ OGLWidget::OGLWidget(QWidget *parent)
     m_pick_y(0),
     m_move_x(0),
     m_move_y(0),
-    m_frame(0),
     m_fps(60.0),
     m_1_fps(0.16666),
     m_pPickedBody(0),
@@ -97,19 +96,12 @@ void OGLWidget::paintGL()
 
     // get the time since the last iteration
     float dt = m_clock.getTimeMicroseconds()/1.0e6; //turns us to s
-    float dt_f=m_clock_frame.getTimeMilliseconds()/1.0e3; //turns ms to s
+
     // reset the clock to 0
     if(dt>m_1_fps){
         // update the scene (convert ms to s)
         UpdateScene(dt);
-        if (m_frame<int(10*m_fps)){
-            m_frame++;
-            float fps=(m_frame/dt_f)+1;
-            //printf("fps:%.1f;\n",fps);
-        }else{
-            m_frame=0;
-            m_clock_frame.reset();
-        }
+        FPS=1./dt;
         m_clock.reset();
     }
 
@@ -118,6 +110,19 @@ void OGLWidget::paintGL()
 
     // render the scene
     RenderScene();
+
+    glDisable(GL_DEPTH_TEST);
+    QPainter painter;
+    painter.begin(this);
+    QPen pen;
+    pen.setColor(Qt::red);
+    painter.setPen(pen);
+
+    painter.drawText(10,20,"FPS:"+QString::number(FPS,'f',1)+"|"+QString::number(m_fps,'f',1));
+
+    painter.end();
+    glEnable(GL_DEPTH_TEST);
+
     update();
     //std::cout<<"update"<<std::endl;
     //parentWidget()->update();
