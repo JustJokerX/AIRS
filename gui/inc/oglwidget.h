@@ -15,8 +15,16 @@
 #include "GameObject.h"
 #include "DebugDrawer.h"
 
+#include <set>
+#include <iterator>
+#include <algorithm>
+
 // a convenient typedef to reference an STL vector of GameObjects
 typedef std::vector<GameObject*> GameObjects;
+
+// convenient typedefs for collision events
+typedef std::pair<const btRigidBody*, const btRigidBody*> CollisionPair;
+typedef std::set<CollisionPair> CollisionPairs;
 
 // struct to store our raycasting results
 struct RayResult{
@@ -70,13 +78,20 @@ public:
 
     void ShootBox(const btVector3 &direction);
     void DestroyGameObject(btRigidBody* pBody);
-// picking functions
+    GameObject* FindGameObject(btRigidBody* pBody);
+
+    // picking functions
     btVector3 GetPickingRay(int x, int y);
     bool Raycast(const btVector3 &startPosition, const btVector3 &direction, RayResult &output);
 
     // constraint functions
     void CreatePickingConstraint(int x, int y);
     void RemovePickingConstraint();
+
+    // collision event functions
+    void CheckForCollisionEvents();
+    virtual void CollisionEvent(btRigidBody* pBody0, btRigidBody * pBody1);
+    virtual void SeparationEvent(btRigidBody * pBody0, btRigidBody * pBody1);
 
 protected:
     float m_cameraDistance; // distance from the camera to its target
@@ -120,6 +135,9 @@ protected:
     btRigidBody* m_pPickedBody;				// the body we picked up
     btTypedConstraint*  m_pPickConstraint;	// the constraint the body is attached to
     btScalar m_oldPickingDist;				// the distance from the camera to the hit point (so we can move the object up, down, left and right from our view)
+
+    // collision event variables
+    CollisionPairs m_pairsLastUpdate;
 
     // pick bool
     bool m_bpick;
