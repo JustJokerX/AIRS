@@ -755,29 +755,29 @@ void OGLWidget::CheckForCollisionEvents() {
 }
 
 void OGLWidget::CollisionEvent(btRigidBody * pBody0, btRigidBody * pBody1) {
-    // find the two colliding objects
-    GameObject* pObj0 = FindGameObject(pBody0);
-    GameObject* pObj1 = FindGameObject(pBody1);
-
-    // exit if we didn't find anything
-    if (!pObj0 || !pObj1) return;
-
-    // set their colors to white
-    pObj0->SetColor(btVector3(1.0,1.0,1.0));
-    pObj1->SetColor(btVector3(1.0,1.0,1.0));
+//    // find the two colliding objects
+//    GameObject* pObj0 = FindGameObject(pBody0);
+//    GameObject* pObj1 = FindGameObject(pBody1);
+//
+//    // exit if we didn't find anything
+//    if (!pObj0 || !pObj1) return;
+//
+//    // set their colors to white
+//    pObj0->SetColor(btVector3(1.0,1.0,1.0));
+//    pObj1->SetColor(btVector3(1.0,1.0,1.0));
 }
 
 void OGLWidget::SeparationEvent(btRigidBody * pBody0, btRigidBody * pBody1) {
-    // get the two separating objects
-    GameObject* pObj0 = FindGameObject((btRigidBody*)pBody0);
-    GameObject* pObj1 = FindGameObject((btRigidBody*)pBody1);
-
-    // exit if we didn't find anything
-    if (!pObj0 || !pObj1) return;
-
-    // set their colors to black
-    pObj0->SetColor(btVector3(0.0,0.0,0.0));
-    pObj1->SetColor(btVector3(0.0,0.0,0.0));
+//    // get the two separating objects
+//    GameObject* pObj0 = FindGameObject((btRigidBody*)pBody0);
+//    GameObject* pObj1 = FindGameObject((btRigidBody*)pBody1);
+//
+//    // exit if we didn't find anything
+//    if (!pObj0 || !pObj1) return;
+//
+//    // set their colors to black
+//    pObj0->SetColor(btVector3(0.0,0.0,0.0));
+//    pObj1->SetColor(btVector3(0.0,0.0,0.0));
 }
 
 GameObject* OGLWidget::FindGameObject(btRigidBody* pBody) {
