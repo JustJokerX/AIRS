@@ -514,6 +514,23 @@ void OGLWidget::DrawShape(btScalar *transform, const btCollisionShape *pShape, c
             break;
         }
 
+        case COMPOUND_SHAPE_PROXYTYPE:
+        {
+            // get the shape
+            const btCompoundShape* pCompound = static_cast<const btCompoundShape*>(pShape);
+            // iterate through the children
+            for (int i = 0; i < pCompound->getNumChildShapes(); ++i) {
+                // get the transform of the sub-shape
+                btTransform thisTransform = pCompound->getChildTransform(i);
+                btScalar thisMatrix[16];
+                thisTransform.getOpenGLMatrix(thisMatrix);
+                // call drawshape recursively for each child. The matrix
+                // stack takes care of positioning/orienting the object for us
+                DrawShape(thisMatrix, pCompound->getChildShape(i), color);
+            }
+            break;
+        }
+
         default:
             // unsupported type
             break;

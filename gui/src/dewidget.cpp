@@ -84,6 +84,26 @@ void DEWidget::CreateObjects()
     pShape->initializePolyhedralFeatures();
     // create the game object using our convex hull shape
     CreateGameObject(pShape, 1.0, btVector3(1,1,1), btVector3(5, 15, 0));
+
+    // create two shapes for the rod and the load
+    btCollisionShape* pRod = new btBoxShape(btVector3(1.5f, 0.2f, 0.2f));
+    btCollisionShape* pLoad = new btSphereShape(0.5f);
+    // create a transform we'll use to set each object's position
+    btTransform trans;
+    trans.setIdentity();
+    // create our compound shape
+    btCompoundShape* pCompound = new btCompoundShape();
+    // add the rod
+    pCompound->addChildShape(trans, pRod);
+    trans.setOrigin(btVector3(-1.75f, 0.0f, 0.0f));
+    // add the top load
+    pCompound->addChildShape(trans, pLoad);
+    trans.setIdentity();
+    // add the bottom load
+    trans.setOrigin(btVector3(1.75f, 0.0f, 0.0f));
+    pCompound->addChildShape(trans, pLoad);
+    // create a game object using the compound shape
+    CreateGameObject(pCompound, 2.0f, btVector3(0.8,0.4,0.1), btVector3(-4, 10.0f, 0.0f));
 }
 
 void DEWidget::CollisionEvent(btRigidBody *pBody0, btRigidBody *pBody1) {
