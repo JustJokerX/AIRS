@@ -40,3 +40,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     // propgation
     de->keyPressEvent(event);
 }
+
+void MainWindow::keyReleaseEvent(QKeyEvent *event){
+    // propgation
+    de->keyReleaseEvent(event);
+}

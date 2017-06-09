@@ -273,6 +273,9 @@ void OGLWidget::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 
+void OGLWidget::keyReleaseEvent(QKeyEvent *event) {
+}
+
 void OGLWidget::keyPressEvent(QKeyEvent *event) {
     switch (event->key()) {
         case Qt::Key_L:                                     //L为开启关闭光源的切换键
@@ -571,7 +574,8 @@ btVector3 OGLWidget::GetPickingRay(int x, int y) {
     return rayTo;
 }
 
-bool OGLWidget::Raycast(const btVector3 &startPosition, const btVector3 &direction, RayResult &output) {
+//bool OGLWidget::Raycast(const btVector3 &startPosition, const btVector3 &direction, RayResult &output) {
+bool OGLWidget::Raycast(const btVector3 &startPosition, const btVector3 &direction, RayResult &output, bool includeStatic) {
     if (!m_pWorld)
         return false;
 
@@ -594,8 +598,13 @@ bool OGLWidget::Raycast(const btVector3 &startPosition, const btVector3 &directi
 
         // prevent us from picking objects
         // like the ground plane
-        if (pBody->isStaticObject() || pBody->isKinematicObject())
-            return false;
+        if (!includeStatic) // skip this check if we want it to hit static objects
+        {
+            if (pBody->isStaticObject() || pBody->isKinematicObject())
+            {
+                return false;
+            }
+        }
 
         // set the result data
         output.pBody = pBody;
@@ -791,3 +800,5 @@ GameObject* OGLWidget::FindGameObject(btRigidBody* pBody) {
     }
     return 0;
 }
+
+

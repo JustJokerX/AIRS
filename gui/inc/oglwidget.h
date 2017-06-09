@@ -38,13 +38,14 @@ public:
     OGLWidget(QWidget *parent = 0);
     ~OGLWidget();
     // camera functions
-    void keyPressEvent(QKeyEvent *event);           //处理键盘按下事件
-    void mousePressEvent(QMouseEvent *event);       //鼠标按下事件
-    void mouseMoveEvent(QMouseEvent *event);        //鼠标移动事件
-    void mouseReleaseEvent(QMouseEvent *event);     //鼠标释放事件
+    virtual void keyPressEvent(QKeyEvent *event);           //处理键盘按下事件
+    virtual void keyReleaseEvent(QKeyEvent *event);         //处理键盘弹起事件
+    virtual void mousePressEvent(QMouseEvent *event);       //鼠标按下事件
+    virtual void mouseMoveEvent(QMouseEvent *event);        //鼠标移动事件
+    virtual void mouseReleaseEvent(QMouseEvent *event);     //鼠标释放事件
 
     // do init
-    void initializeGL();
+    virtual void initializeGL();
 
     // rendering. Can be overrideen by derived classes
     virtual void RenderScene();
@@ -82,8 +83,8 @@ public:
 
     // picking functions
     btVector3 GetPickingRay(int x, int y);
-    bool Raycast(const btVector3 &startPosition, const btVector3 &direction, RayResult &output);
-
+    //bool Raycast(const btVector3 &startPosition, const btVector3 &direction, RayResult &output);
+    bool Raycast(const btVector3 &startPosition, const btVector3 &direction, RayResult &output, bool includeStatic = false);
     // constraint functions
     void CreatePickingConstraint(int x, int y);
     void RemovePickingConstraint();

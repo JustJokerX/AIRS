@@ -1,5 +1,14 @@
 #include "dewidget.h"
 
+DEWidget::DEWidget():
+OGLWidget(),
+m_bApplyForce(false),
+m_pExplosion(0),
+m_bCanExplode(true)
+{
+
+}
+
 void DEWidget::InitializePhysics() {
     // create the collision configuration
     m_pCollisionConfiguration = new btDefaultCollisionConfiguration();
@@ -65,4 +74,125 @@ void DEWidget::CollisionEvent(btRigidBody *pBody0, btRigidBody *pBody1) {
         // if yes, create a big green box nearby
         CreateGameObject(new btBoxShape(btVector3(2,2,2)), 2.0, btVector3(0.3, 0.7, 0.3), btVector3(5, 10, 0));
     }
+
+    // Impulse testing
+    if (pBody0 == m_pExplosion || pBody1 == m_pExplosion) {
+        // get the pointer of the other object
+        btRigidBody* pOther;
+        pBody0 == m_pExplosion ? pOther = (btRigidBody*)pBody1 : pOther = (btRigidBody*)pBody0;
+        // wake the object up
+        pOther->setActivationState(ACTIVE_TAG);
+        // calculate the vector between the object and
+        // the center of the explosion
+        btVector3 dir = pOther->getWorldTransform().getOrigin() - m_pExplosion->getWorldTransform().getOrigin();
+        // get the distance
+        float dist = dir.length();
+        // calculate the impulse strength
+        float strength = EXPLOSION_STRENGTH;
+        // follow an inverse-distance rule
+        if (dist != 0.0) strength /= dist;
+        // normalize the direction vector
+        dir.normalize();
+        // apply the impulse
+        pOther->applyCentralImpulse(dir * strength);
+    }
 }
+
+
+
+void DEWidget::keyPressEvent(QKeyEvent *event) {
+    OGLWidget::keyPressEvent(event);
+
+    switch (event->key()) {
+
+        case Qt::Key_G:
+        {
+            // if 'g' is held down, apply a force
+            m_bApplyForce = true;
+            // prevent the box from deactivating
+            m_pBox->GetRigidBody()->setActivationState(DISABLE_DEACTIVATION);
+            break;
+        }
+
+        case Qt::Key_E:
+        {
+            // don't create a new explosion if one already exists
+            // or we haven't released the key, yet
+            if (m_pExplosion || !m_bCanExplode) break;
+            // don't let us create another explosion until the key is released
+            m_bCanExplode = false;
+            // create a collision object for our explosion
+            m_pExplosion = new btCollisionObject();
+            m_pExplosion->setCollisionShape(new btSphereShape(3.0f));
+            // get the position that we clicked
+            RayResult result;
+            Raycast(m_cameraPosition, GetPickingRay(m_move_x, m_move_y), result, true);
+            // create a transform from the hit point
+            btTransform explodeTrans;
+            explodeTrans.setIdentity();
+            explodeTrans.setOrigin(result.hitPoint);
+            m_pExplosion->setWorldTransform(explodeTrans);
+            // set the collision flag
+            m_pExplosion->setCollisionFlags(btCollisionObject::CF_NO_CONTACT_RESPONSE);
+            // add the explosion trigger to our world
+            m_pWorld->addCollisionObject(m_pExplosion);
+            break;
+        }
+
+    }
+}
+
+void DEWidget::keyReleaseEvent(QKeyEvent *event) {
+    OGLWidget::keyReleaseEvent(event);
+    switch (event->key()){
+        case Qt::Key_G:
+        {
+            // if 'g' is let go, stop applying the force
+            m_bApplyForce = false;
+            // allow the object to deactivate again
+            m_pBox->GetRigidBody()->forceActivationState(ACTIVE_TAG);
+            break;
+        }
+
+        case Qt::Key_E:
+        {
+            m_bCanExplode = true;
+            break;
+        }
+
+    }
+
+}
+
+void DEWidget::UpdateScene(float dt) {
+    OGLWidget::UpdateScene(dt);
+    // Force testing
+    if (m_bApplyForce) {
+        if (!m_pBox) return;
+        // apply a central upwards force that exceeds gravity
+        m_pBox->GetRigidBody()->applyCentralForce(btVector3(0, 20, 0));
+    }
+    // Impulse testing
+    if (m_pExplosion and m_bCanExplode == true) {
+        // destroy the explosion object after one iteration
+        m_pWorld->removeCollisionObject(m_pExplosion);
+        delete m_pExplosion;
+        m_pExplosion = 0;
+    }
+}
+
+
+void DEWidget::mousePressEvent(QMouseEvent *event) {
+    OGLWidget::mousePressEvent(event);
+}
+
+void DEWidget::mouseMoveEvent(QMouseEvent *event) {
+    OGLWidget::mouseMoveEvent(event);
+}
+
+void DEWidget::mouseReleaseEvent(QMouseEvent *event) {
+    OGLWidget::mouseReleaseEvent(event);
+}
+
+
+
