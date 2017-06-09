@@ -91,7 +91,7 @@ void OGLWidget::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // get the time since the last iteration
-    float dt = m_clock.getTimeMicroseconds() / 1.0e6; //turns us to s
+    float dt = m_clock.getTimeMicroseconds() * 0.000001f; //turns us to s
 
     // reset the clock to 0
     if (dt > m_1_fps) {
