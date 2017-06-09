@@ -501,9 +501,16 @@ void OGLWidget::DrawShape(btScalar *transform, const btCollisionShape *pShape, c
             const btCylinderShape* pCylinder = static_cast<const btCylinderShape*>(pShape);
             // get the relevant data
             float radius = pCylinder->getRadius();
-            float halfHeight = pCylinder->getHalfExtentsWithMargin()[1];
+            float halfHeight = pCylinder->getHalfExtentsWithMargin().getY();
             // draw the cylinder
             DrawCylinder(radius,halfHeight);
+            break;
+        }
+
+        case CONVEX_HULL_SHAPE_PROXYTYPE:
+        {
+            // draw the convex hull shape...whatever it is
+            DrawConvexHull(pShape);
             break;
         }
 
@@ -894,6 +901,38 @@ void OGLWidget::DrawCylinder(const btScalar &radius, const btScalar &halfHeight)
     // don't need the quadric anymore, so remove it
     // to save memory
     gluDeleteQuadric(quadObj);
+}
+
+void OGLWidget::DrawConvexHull(const btCollisionShape *shape) {
+    // get the polyhedral data from the convex hull
+    const btConvexPolyhedron* pPoly = shape->isPolyhedral() ? ((btPolyhedralConvexShape*) shape)->getConvexPolyhedron() : 0;
+    if (!pPoly) return;
+    // begin drawing triangles
+    glBegin (GL_TRIANGLES);
+    // iterate through all faces
+    for (int i = 0; i < pPoly->m_faces.size(); i++) {
+        // get the indices for the face
+        int numVerts = pPoly->m_faces[i].m_indices.size();
+        if (numVerts>2)	{
+            // iterate through all index triplets
+            for (int v = 0; v <pPoly->m_faces[i].m_indices.size()-2;v++) {
+                // grab the three vertices
+                btVector3 v1 = pPoly->m_vertices[pPoly->m_faces[i].m_indices[0]];
+                btVector3 v2 = pPoly->m_vertices[pPoly->m_faces[i].m_indices[v+1]];
+                btVector3 v3 = pPoly->m_vertices[pPoly->m_faces[i].m_indices[v+2]];
+                // calculate the normal
+                btVector3 normal = (v3-v1).cross(v2-v1);
+                normal.normalize ();
+                // draw the triangle
+                glNormal3f(normal.getX(),normal.getY(),normal.getZ());
+                glVertex3f (v1.x(), v1.y(), v1.z());
+                glVertex3f (v2.x(), v2.y(), v2.z());
+                glVertex3f (v3.x(), v3.y(), v3.z());
+            }
+        }
+    }
+    // done drawing
+    glEnd ();
 }
 
 

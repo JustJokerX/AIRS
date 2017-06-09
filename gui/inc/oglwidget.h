@@ -10,6 +10,9 @@
 #include <GL/gl.h>
 #include <bullet/btBulletDynamicsCommon.h>
 #include <bullet/btBulletCollisionCommon.h>
+#include <bullet/BulletCollision/CollisionShapes/btConvexPolyhedron.h>
+#include <bullet/BulletCollision/CollisionShapes/btShapeHull.h>
+
 // include our custom Motion State object
 #include "openglmotionstate.h"
 #include "GameObject.h"
@@ -70,6 +73,7 @@ public:
     void DrawBox(const btVector3 &halfSize);
     void DrawSphere(const btScalar &radius);
     void DrawCylinder(const btScalar &radius, const btScalar &halfHeight);
+    void DrawConvexHull(const btCollisionShape* shape);
     void DrawShape(btScalar* transform, const btCollisionShape* pShape, const btVector3 &color);
     // object functions
     GameObject *CreateGameObject(btCollisionShape* pShape,
