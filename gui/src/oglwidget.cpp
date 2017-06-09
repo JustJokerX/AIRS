@@ -483,6 +483,30 @@ void OGLWidget::DrawShape(btScalar *transform, const btCollisionShape *pShape, c
             DrawBox(halfSize);
             break;
         }
+
+        case SPHERE_SHAPE_PROXYTYPE:
+        {
+            // assume the shape is a sphere and typecast it
+            const btSphereShape* sphere = static_cast<const btSphereShape*>(pShape);
+            // get the sphere's size from the shape
+            float radius = sphere->getMargin();
+            // draw the sphere
+            DrawSphere(radius);
+            break;
+        }
+
+        case CYLINDER_SHAPE_PROXYTYPE:
+        {
+            // assume the object is a cylinder
+            const btCylinderShape* pCylinder = static_cast<const btCylinderShape*>(pShape);
+            // get the relevant data
+            float radius = pCylinder->getRadius();
+            float halfHeight = pCylinder->getHalfExtentsWithMargin()[1];
+            // draw the cylinder
+            DrawCylinder(radius,halfHeight);
+            break;
+        }
+
         default:
             // unsupported type
             break;
@@ -799,6 +823,77 @@ GameObject* OGLWidget::FindGameObject(btRigidBody* pBody) {
         }
     }
     return 0;
+}
+
+void OGLWidget::DrawSphere(const btScalar &radius) {
+    // some constant values for more many segments to build the sphere from
+    static int lateralSegments = 25;
+    static int longitudinalSegments = 25;
+    // iterate laterally
+    for(int i = 0; i <= lateralSegments; i++) {
+        // do a little math to find the angles of this segment
+        btScalar lat0 = SIMD_PI * (-btScalar(0.5) + (btScalar) (i - 1) / lateralSegments);
+        btScalar z0 = radius * sin(lat0);
+        btScalar zr0 = radius * cos(lat0);
+        btScalar lat1 = SIMD_PI * (-btScalar(0.5) + (btScalar) i / lateralSegments);
+        btScalar z1 = radius * sin(lat1);
+        btScalar zr1 = radius * cos(lat1);
+        // start rendering strips of quads (polygons with 4 poins)
+        glBegin(GL_QUAD_STRIP);
+        // iterate longitudinally
+        for (int j = 0; j <= longitudinalSegments; j++) {
+            // determine the points of the quad from the lateral angles
+            btScalar lng = 2 * SIMD_PI * (btScalar) (j - 1) / longitudinalSegments;
+            btScalar x = cos(lng);
+            btScalar y = sin(lng);
+            // draw the normals and vertices for each point in the quad
+            // since it is a STRIP of quads, we only need to add two points
+            // each time to create a whole new quad
+
+            // calculate the normal
+            btVector3 normal = btVector3(x * zr0, y * zr0, z0);
+            normal.normalize();
+            glNormal3f(normal.x(), normal.y(), normal.z());
+            // create the first vertex
+            glVertex3f(x * zr0, y * zr0, z0);
+
+            // calculate the next normal
+            normal = btVector3(x * zr1, y * zr1, z1);
+            normal.normalize();
+            glNormal3f(normal.x(), normal.y(), normal.z());
+            // create the second vertex
+            glVertex3f(x * zr1, y * zr1, z1);
+
+            // and repeat...
+        }
+        glEnd();
+    }
+}
+
+void OGLWidget::DrawCylinder(const btScalar &radius, const btScalar &halfHeight) {
+    static int slices = 15;
+    static int stacks = 10;
+    // tweak the starting position of the
+    // cylinder to match the physics object
+    glRotatef(-90.0, 1.0, 0.0, 0.0);
+    glTranslatef(0.0, 0.0, -halfHeight);
+    // create a quadric object to render with
+    GLUquadricObj *quadObj = gluNewQuadric();
+    // set the draw style of the quadric
+    gluQuadricDrawStyle(quadObj, (GLenum)GLU_FILL);
+    gluQuadricNormals(quadObj, (GLenum)GLU_SMOOTH);
+    // create a disk to cap the cylinder
+    gluDisk(quadObj, 0, radius, slices, stacks);
+    // create the main hull of the cylinder (no caps)
+    gluCylinder(quadObj, radius, radius, 2.f*halfHeight, slices, stacks);
+    // shift the position and rotation again
+    glTranslatef(0.0f, 0.0f, 2.f*halfHeight);
+    glRotatef(-180.0f, 0.0f, 1.0f, 0.0f);
+    // draw the cap on the other end of the cylinder
+    gluDisk(quadObj, 0, radius, slices, stacks);
+    // don't need the quadric anymore, so remove it
+    // to save memory
+    gluDeleteQuadric(quadObj);
 }
 
 

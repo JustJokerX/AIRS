@@ -65,6 +65,12 @@ void DEWidget::CreateObjects()
     m_pTrigger->setCollisionFlags(btCollisionObject::CF_NO_CONTACT_RESPONSE);
     // add the trigger to our world
     m_pWorld->addCollisionObject(m_pTrigger);
+
+
+    // create a yellow sphere
+    CreateGameObject(new btSphereShape(1.0f), 1.0, btVector3(0.7f, 0.7f, 0.0f), btVector3(-5.0, 10.0f, 0.0f));
+    // create a green cylinder
+    CreateGameObject(new btCylinderShape(btVector3(1,1,1)), 1.0, btVector3(0.0f, 0.7f, 0.0f), btVector3(-2, 10.0f, 0.0f));
 }
 
 void DEWidget::CollisionEvent(btRigidBody *pBody0, btRigidBody *pBody1) {
