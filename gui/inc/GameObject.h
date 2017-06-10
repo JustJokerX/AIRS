@@ -2,7 +2,6 @@
 #define _GAMEOBJECT_H_
 
 #include <bullet/btBulletDynamicsCommon.h>
-#include "openglmotionstate.h"
 
 class GameObject {
 public:
@@ -16,9 +15,7 @@ public:
 
     btMotionState* GetMotionState() { return m_pMotionState; }
 
-    void GetTransform(btScalar* transform) {
-        if (m_pMotionState) m_pMotionState->GetWorldTransform(transform);
-    }
+    void GetTransform(btScalar* transform);
 
     btVector3 GetColor() { return m_color; }
 
@@ -27,7 +24,7 @@ public:
 protected:
     btCollisionShape*  m_pShape;
     btRigidBody*    m_pBody;
-    OpenGLMotionState*  m_pMotionState;
+    btDefaultMotionState*  m_pMotionState;
     btVector3      m_color;
 };
 #endif

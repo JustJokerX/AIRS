@@ -14,8 +14,7 @@ GameObject::GameObject(btCollisionShape* pShape, float mass, const btVector3 &co
 
     // create the motion state from the
     // initial transform
-    m_pMotionState = new OpenGLMotionState(transform);
-
+    m_pMotionState = new btDefaultMotionState(transform);
     // calculate the local inertia
     btVector3 localInertia(0,0,0);
 
@@ -37,4 +36,12 @@ GameObject::~GameObject() {
     delete m_pBody;
     delete m_pMotionState;
     delete m_pShape;
+}
+
+void GameObject::GetTransform(btScalar *transform) {
+    if(m_pMotionState) {
+        btTransform trans; // used to maintain orientation and position
+        m_pMotionState->getWorldTransform(trans); // right multiply,NOTE: OldState * transform = NewState
+        trans.getOpenGLMatrix(transform); //Do nothing weired,but turns the data to OpenGLMatrix type
+    }
 }

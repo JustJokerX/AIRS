@@ -21,7 +21,7 @@ OGLWidget::OGLWidget(QWidget *parent)
           m_pDispatcher(0),
           m_pSolver(0),
           m_pWorld(0),
-          m_fullscreen(false),
+//          m_fullscreen(false),
           m_pick_x(0),
           m_pick_y(0),
           m_move_x(0),
@@ -30,7 +30,8 @@ OGLWidget::OGLWidget(QWidget *parent)
           m_1_fps(0.16666),
           m_pPickedBody(0),
           m_pPickConstraint(0),
-          m_bpick(false) {
+          m_bpick(false)
+{
     this->setMouseTracking(true);
     m_1_fps = 1.0f / m_fps;
 }
@@ -272,22 +273,24 @@ void OGLWidget::mouseReleaseEvent(QMouseEvent *event) {
     }
 }
 
-
 void OGLWidget::keyReleaseEvent(QKeyEvent *event) {
+    //pass
 }
 
 void OGLWidget::keyPressEvent(QKeyEvent *event) {
+
     switch (event->key()) {
-        case Qt::Key_L:                                     //L为开启关闭光源的切换键
+
+        case Qt::Key_L:                                     //switch
             m_Light = !m_Light;
             if (m_Light) {
-                glEnable(GL_LIGHTING);                      //开启光源
+                glEnable(GL_LIGHTING);                      //open lighting
             } else {
-                glDisable(GL_LIGHTING);                     //关闭光源
+                glDisable(GL_LIGHTING);                     //close lighting
             }
             break;
 
-            //OpenGL Widget fullscreen // have some bugs
+//OpenGL Widget fullscreen // have some bugs, when this working, this class will do the initGL
 //    case Qt::Key_F2:
 //        m_fullscreen=!m_fullscreen;
 //        if (m_fullscreen){
@@ -316,7 +319,8 @@ void OGLWidget::keyPressEvent(QKeyEvent *event) {
             m_pDebugDrawer->ToggleDebugFlag(btIDebugDraw::DBG_DrawAabb);
             break;
 
-        case Qt::Key_D: {
+        case Qt::Key_D:
+        {
             // create a temp object to store the raycast result
             RayResult result;
             // perform the raycast
@@ -326,6 +330,7 @@ void OGLWidget::keyPressEvent(QKeyEvent *event) {
             DestroyGameObject(result.pBody);
             break;
         }
+
         case Qt::Key_Left:
             RotateCamera(m_cameraYaw, +CAMERA_STEP_SIZE);
             break;
@@ -345,102 +350,17 @@ void OGLWidget::keyPressEvent(QKeyEvent *event) {
     }
 }
 
-
-//void OGLWidget::DrawBox(const btVector3 &halfSize, const btVector3 &color) {
-void OGLWidget::DrawBox(const btVector3 &halfSize) {
-
-    // push the transform onto the stack
-    //glPushMatrix();
-    //glMultMatrixf(transform);
-
-    float halfWidth = halfSize.x();
-    float halfHeight = halfSize.y();
-    float halfDepth = halfSize.z();
-
-    // set the object's color
-
-    //glColor3f(color.x(), color.y(), color.z());
-
-    // create the vertex positions
-    btVector3 vertices[8] = {
-            btVector3(halfWidth, halfHeight, halfDepth),
-            btVector3(-halfWidth, halfHeight, halfDepth),
-            btVector3(halfWidth, -halfHeight, halfDepth),
-            btVector3(-halfWidth, -halfHeight, halfDepth),
-            btVector3(halfWidth, halfHeight, -halfDepth),
-            btVector3(-halfWidth, halfHeight, -halfDepth),
-            btVector3(halfWidth, -halfHeight, -halfDepth),
-            btVector3(-halfWidth, -halfHeight, -halfDepth)};
-
-    // create the indexes for each triangle, using the
-    // vertices above. Make it static so we don't waste
-    // processing time recreating it over and over again
-    static int indices[36] = {
-            0, 1, 2,
-            3, 2, 1,
-            4, 0, 6,
-            6, 0, 2,
-            5, 1, 4,
-            4, 1, 0,
-            7, 3, 1,
-            7, 1, 5,
-            5, 4, 7,
-            7, 4, 6,
-            7, 2, 3,
-            7, 6, 2};
-
-    // start processing vertices as triangles
-    glBegin(GL_TRIANGLES);
-
-    // increment the loop by 3 each time since we create a
-    // triangle with 3 vertices at a time.
-
-    for (int i = 0; i < 36; i += 3) {
-        // get the three vertices for the triangle based
-        // on the index values set above
-        // use const references so we don't copy the object
-        // (a good rule of thumb is to never allocate/deallocate
-        // memory during *every* render/update call. This should
-        // only happen sporadically)
-        const btVector3 &vert1 = vertices[indices[i]];
-        const btVector3 &vert2 = vertices[indices[i + 1]];
-        const btVector3 &vert3 = vertices[indices[i + 2]];
-
-        // create a normal that is perpendicular to the
-        // face (use the cross product)
-        btVector3 normal = (vert3 - vert1).cross(vert2 - vert1);
-        normal.normalize();
-
-        // set the normal for the subsequent vertices
-        glNormal3f(normal.getX(), normal.getY(), normal.getZ());
-
-        // create the vertices
-        glVertex3f(vert1.x(), vert1.y(), vert1.z());
-        glVertex3f(vert2.x(), vert2.y(), vert2.z());
-        glVertex3f(vert3.x(), vert3.y(), vert3.z());
-    }
-
-    // stop processing vertices
-    glEnd();
-    // pop the transform from the stack in preparation
-    // for the next object
-    //glPopMatrix();
-}
-
-
 void OGLWidget::RenderScene() {
     // create an array of 16 floats (representing a 4x4 matrix)
     btScalar transform[16];
+
+    unsigned long sum_objs = m_objects.size();
     // iterate through all of the objects in our world
-    for (GameObjects::iterator i = m_objects.begin(); i != m_objects.end(); ++i) {
-        // get the object from the iterator
-        GameObject *pObj = *i;
-
+    for (unsigned long i=0; i < sum_objs; ++i) {
         // read the transform
-        pObj->GetTransform(transform);
-
+        m_objects[i]->GetTransform(transform);
         // get data from the object and draw it
-        DrawShape(transform, pObj->GetShape(), pObj->GetColor());
+        DrawShape(transform, m_objects[i]->GetShape(), m_objects[i]->GetColor());
     }
 
     // after rendering all game objects, perform debug rendering
@@ -458,7 +378,7 @@ void OGLWidget::UpdateScene(float dt) {
         // step the simulation through time. This is called
         // every update and the amount of elasped time was
         // determined back in ::paintGL() by our clock object.
-        int sub_step = m_pWorld->stepSimulation(dt, 1, m_1_fps);
+        int sub_step = m_pWorld -> stepSimulation(dt, 1, m_1_fps);
         // std::cout<<"substeps:"<<sub_step<<std::endl;
     }
 }
@@ -473,7 +393,9 @@ void OGLWidget::DrawShape(btScalar *transform, const btCollisionShape *pShape, c
 
     // make a different draw call based on the object type
     switch (pShape->getShapeType()) {
+
         // an internal enum used by Bullet for boxes
+
         case BOX_SHAPE_PROXYTYPE: {
             // assume the shape is a box, and typecast it
             const btBoxShape *box = static_cast<const btBoxShape *>(pShape);
@@ -531,17 +453,18 @@ void OGLWidget::DrawShape(btScalar *transform, const btCollisionShape *pShape, c
             break;
         }
 
-        default:
-            // unsupported type
-            break;
-    }
 
+        default:
+        // unsupported type
+        break;
+    }
     // pop the stack
     glPopMatrix();
 }
 
 GameObject *OGLWidget::CreateGameObject(btCollisionShape *pShape, const float &mass, const btVector3 &color,
                                         const btVector3 &initialPosition, const btQuaternion &initialRotation) {
+
     GameObject *pObject = new GameObject(pShape, mass, color, initialPosition, initialRotation);
 
     // push it to the back of the list
@@ -556,23 +479,23 @@ GameObject *OGLWidget::CreateGameObject(btCollisionShape *pShape, const float &m
 }
 
 void OGLWidget::ShootBox(const btVector3 &direction) {
-// create a new box object
+    // create a new box object
     GameObject *pObject = CreateGameObject(new btBoxShape(btVector3(1, 1, 1)), 1, btVector3(0.4f, 0.f, 0.4f),
                                            m_cameraPosition);
 
-// calculate the velocity
+    // calculate the velocity
     btVector3 velocity = direction;
     velocity.normalize();
     velocity *= 25.0f;
 
-// set the linear velocity of the box
+    // set the linear velocity of the box
     pObject->GetRigidBody()->setLinearVelocity(velocity);
 }
 
 void OGLWidget::DestroyGameObject(btRigidBody *pBody) {
-// we need to search through the objects in order to
-// find the corresponding iterator (can only erase from
-// an std::vector by passing an iterator)
+    // we need to search through the objects in order to
+    // find the corresponding iterator (can only erase from
+    // an std::vector by passing an iterator)
     for (GameObjects::iterator iter = m_objects.begin(); iter != m_objects.end(); ++iter) {
         if ((*iter)->GetRigidBody() == pBody) {
             GameObject *pObject = *iter;
@@ -588,18 +511,31 @@ void OGLWidget::DestroyGameObject(btRigidBody *pBody) {
     }
 }
 
+GameObject* OGLWidget::FindGameObject(btRigidBody* pBody) {
+    // search through our list of gameobjects finding
+    // the one with a rigid body that matches the given one
+    unsigned long sum_objs = m_objects.size();
+    for (unsigned long i=0; i < sum_objs; ++i) {
+        if (m_objects[i]->GetRigidBody() == pBody) {
+            // found the body, so return the corresponding game object
+            return m_objects[i];
+        }
+    }
+    return 0;
+}
+
 btVector3 OGLWidget::GetPickingRay(int x, int y) {
     // calculate the field-of-view
     float tanFov = 1.0f / m_nearPlane;
     float fov = btScalar(2.0) * btAtan(tanFov);
-// get a ray pointing forward from the
-// camera and extend it to the far plane
+    // get a ray pointing forward from the
+    // camera and extend it to the far plane
     btVector3 rayFrom = m_cameraPosition;
     btVector3 rayForward = (m_cameraTarget - m_cameraPosition);
     rayForward.normalize();
     rayForward *= m_farPlane;
-// find the horizontal and vertical vectors
-// relative to the current camera view
+    // find the horizontal and vertical vectors
+    // relative to the current camera view
     btVector3 ver = m_upVector;
     btVector3 hor = rayForward.cross(ver);
     hor.normalize();
@@ -607,10 +543,10 @@ btVector3 OGLWidget::GetPickingRay(int x, int y) {
     ver.normalize();
     hor *= 2.f * m_farPlane * tanFov;
     ver *= 2.f * m_farPlane * tanFov;
-// calculate the aspect ratio
+    // calculate the aspect ratio
     btScalar aspect = m_screenWidth / (btScalar) m_screenHeight;
-// adjust the forward-ray based on
-// the X/Y coordinates that were clicked
+    // adjust the forward-ray based on
+    // the X/Y coordinates that were clicked
     hor *= aspect;
     btVector3 rayToCenter = rayFrom + rayForward;
     btVector3 dHor = hor * 1.f / float(m_screenWidth);
@@ -618,7 +554,7 @@ btVector3 OGLWidget::GetPickingRay(int x, int y) {
     btVector3 rayTo = rayToCenter - 0.5f * hor + 0.5f * ver;
     rayTo += btScalar(x) * dHor;
     rayTo -= btScalar(y) * dVert;
-// return the final result
+    // return the final result
     return rayTo;
 }
 
@@ -627,17 +563,17 @@ bool OGLWidget::Raycast(const btVector3 &startPosition, const btVector3 &directi
     if (!m_pWorld)
         return false;
 
-// get the picking ray from where we clicked
+    // get the picking ray from where we clicked
     btVector3 rayTo = direction;
     btVector3 rayFrom = m_cameraPosition;
 
-// create our raycast callback object
+    // create our raycast callback object
     btCollisionWorld::ClosestRayResultCallback rayCallback(rayFrom, rayTo);
 
-// perform the raycast
+    // perform the raycast
     m_pWorld->rayTest(rayFrom, rayTo, rayCallback);
 
-// did we hit something?
+    // did we hit something?
     if (rayCallback.hasHit()) {
         // if so, get the rigid body we hit
         btRigidBody *pBody = (btRigidBody *) btRigidBody::upcast(rayCallback.m_collisionObject);
@@ -659,7 +595,7 @@ bool OGLWidget::Raycast(const btVector3 &startPosition, const btVector3 &directi
         output.hitPoint = rayCallback.m_hitPointWorld;
         return true;
     }
-// we didn't hit anything
+    // we didn't hit anything
     return false;
 }
 
@@ -726,7 +662,6 @@ void OGLWidget::RemovePickingConstraint() {
     m_pPickConstraint = 0;
 }
 
-
 void OGLWidget::Motion(int x, int y) {
     // did we pick a body with the LMB?
     if (m_pPickedBody) {
@@ -746,7 +681,6 @@ void OGLWidget::Motion(int x, int y) {
         pickCon->getFrameOffsetA().setOrigin(newPivot);
     }
 }
-
 
 void OGLWidget::CheckForCollisionEvents() {
     // keep a list of the collision pairs we
@@ -837,16 +771,84 @@ void OGLWidget::SeparationEvent(btRigidBody * pBody0, btRigidBody * pBody1) {
 //    pObj1->SetColor(btVector3(0.0,0.0,0.0));
 }
 
-GameObject* OGLWidget::FindGameObject(btRigidBody* pBody) {
-    // search through our list of gameobjects finding
-    // the one with a rigid body that matches the given one
-    for (GameObjects::iterator iter = m_objects.begin(); iter != m_objects.end(); ++iter) {
-        if ((*iter)->GetRigidBody() == pBody) {
-            // found the body, so return the corresponding game object
-            return *iter;
-        }
+void OGLWidget::DrawBox(const btVector3 &halfSize) {
+
+    // push the transform onto the stack
+    //glPushMatrix();
+    //glMultMatrixf(transform);
+
+    float halfWidth = halfSize.x();
+    float halfHeight = halfSize.y();
+    float halfDepth = halfSize.z();
+
+    // set the object's color
+
+    //glColor3f(color.x(), color.y(), color.z());
+
+    // create the vertex positions
+    btVector3 vertices[8] = {
+            btVector3(halfWidth, halfHeight, halfDepth),
+            btVector3(-halfWidth, halfHeight, halfDepth),
+            btVector3(halfWidth, -halfHeight, halfDepth),
+            btVector3(-halfWidth, -halfHeight, halfDepth),
+            btVector3(halfWidth, halfHeight, -halfDepth),
+            btVector3(-halfWidth, halfHeight, -halfDepth),
+            btVector3(halfWidth, -halfHeight, -halfDepth),
+            btVector3(-halfWidth, -halfHeight, -halfDepth)};
+
+    // create the indexes for each triangle, using the
+    // vertices above. Make it static so we don't waste
+    // processing time recreating it over and over again
+    static int indices[36] = {
+            0, 1, 2,
+            3, 2, 1,
+            4, 0, 6,
+            6, 0, 2,
+            5, 1, 4,
+            4, 1, 0,
+            7, 3, 1,
+            7, 1, 5,
+            5, 4, 7,
+            7, 4, 6,
+            7, 2, 3,
+            7, 6, 2};
+
+    // start processing vertices as triangles
+    glBegin(GL_TRIANGLES);
+
+    // increment the loop by 3 each time since we create a
+    // triangle with 3 vertices at a time.
+
+    for (int i = 0; i < 36; i += 3) {
+        // get the three vertices for the triangle based
+        // on the index values set above
+        // use const references so we don't copy the object
+        // (a good rule of thumb is to never allocate/deallocate
+        // memory during *every* render/update call. This should
+        // only happen sporadically)
+        const btVector3 &vert1 = vertices[indices[i]];
+        const btVector3 &vert2 = vertices[indices[i + 1]];
+        const btVector3 &vert3 = vertices[indices[i + 2]];
+
+        // create a normal that is perpendicular to the
+        // face (use the cross product)
+        btVector3 normal = (vert3 - vert1).cross(vert2 - vert1);
+        normal.normalize();
+
+        // set the normal for the subsequent vertices
+        glNormal3f(normal.getX(), normal.getY(), normal.getZ());
+
+        // create the vertices
+        glVertex3f(vert1.x(), vert1.y(), vert1.z());
+        glVertex3f(vert2.x(), vert2.y(), vert2.z());
+        glVertex3f(vert3.x(), vert3.y(), vert3.z());
     }
-    return 0;
+
+    // stop processing vertices
+    glEnd();
+    // pop the transform from the stack in preparation
+    // for the next object
+    //glPopMatrix();
 }
 
 void OGLWidget::DrawSphere(const btScalar &radius) {

@@ -14,7 +14,6 @@
 #include <bullet/BulletCollision/CollisionShapes/btShapeHull.h>
 
 // include our custom Motion State object
-#include "openglmotionstate.h"
 #include "GameObject.h"
 #include "DebugDrawer.h"
 
@@ -59,10 +58,12 @@ public:
     virtual void resizeGL(int w, int h);
     virtual void paintGL();
 
-    // physics functions. Can be overriden by derived classes (like BasicDemo)
+    // physics functions. Can be overriden by derived classes (like DeWidget)
     virtual void InitializePhysics() {}
     virtual void ShutdownPhysics() {}
-    virtual void Motion(int x, int y);
+
+
+
 
     // camera functions
     void UpdateCamera();
@@ -75,6 +76,7 @@ public:
     void DrawCylinder(const btScalar &radius, const btScalar &halfHeight);
     void DrawConvexHull(const btCollisionShape* shape);
     void DrawShape(btScalar* transform, const btCollisionShape* pShape, const btVector3 &color);
+
     // object functions
     GameObject *CreateGameObject(btCollisionShape* pShape,
             const float &mass,
@@ -88,11 +90,14 @@ public:
 
     // picking functions
     btVector3 GetPickingRay(int x, int y);
+
     //bool Raycast(const btVector3 &startPosition, const btVector3 &direction, RayResult &output);
     bool Raycast(const btVector3 &startPosition, const btVector3 &direction, RayResult &output, bool includeStatic = false);
+
     // constraint functions
     void CreatePickingConstraint(int x, int y);
     void RemovePickingConstraint();
+    virtual void Motion(int x, int y);
 
     // collision event functions
     void CheckForCollisionEvents();
@@ -106,8 +111,8 @@ protected:
 
     bool m_Light;
 
-//temp added
-    bool m_fullscreen;
+    //bool m_fullscreen;
+
     // camera control
     btVector3 m_cameraPosition; // the camera's current position
     btVector3 m_cameraTarget;	 // the camera's lookAt target
@@ -125,12 +130,8 @@ protected:
     btConstraintSolver* m_pSolver;
     btDynamicsWorld* m_pWorld;
 
-    // our custom motion state
-//    OpenGLMotionState* m_pMotionState;
-
     // a simple clock for counting time
     btClock m_clock;
-    btClock m_clock_frame;
     // an array of our game objects
     GameObjects m_objects;
 
