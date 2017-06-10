@@ -41,7 +41,6 @@ OGLWidget::~OGLWidget() {
     ShutdownPhysics();
 }
 
-
 void OGLWidget::initializeGL() {
     makeCurrent();
     // create some floats for our ambient, diffuse, specular and position

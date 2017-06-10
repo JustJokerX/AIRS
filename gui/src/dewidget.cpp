@@ -1,5 +1,7 @@
 #include "dewidget.h"
-
+#include "b3ResourcePath.h"
+#include "LoadMeshFromSTL.h"
+#include <Bullet3Common/b3FileUtils.h>
 DEWidget::DEWidget():
 OGLWidget(),
 m_bApplyForce(false),
@@ -20,7 +22,6 @@ void DEWidget::InitializePhysics() {
     m_pSolver = new btSequentialImpulseConstraintSolver();
     // create the world
     m_pWorld = new btDiscreteDynamicsWorld(m_pDispatcher, m_pBroadphase, m_pSolver, m_pCollisionConfiguration);
-
     // create our scene's physics objects
     CreateObjects();
 }
@@ -49,7 +50,6 @@ void DEWidget::CreateObjects()
 
     // create our red box, but store the pointer for future usage
     m_pBox = CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(1.0f, 0.2f, 0.2f), btVector3(0.0f, 10.0f, 0.0f));
-
     // create a second box
     CreateGameObject(new btBoxShape(btVector3(1,1,1)), 1.0, btVector3(0.0f, 0.2f, 0.8f), btVector3(1.25f, 20.0f, 0.0f));
     // create a trigger volume
@@ -65,8 +65,6 @@ void DEWidget::CreateObjects()
     m_pTrigger->setCollisionFlags(btCollisionObject::CF_NO_CONTACT_RESPONSE);
     // add the trigger to our world
     m_pWorld->addCollisionObject(m_pTrigger);
-
-
     // create a yellow sphere
     CreateGameObject(new btSphereShape(1.0f), 1.0, btVector3(0.7f, 0.7f, 0.0f), btVector3(-5.0, 10.0f, 0.0f));
     // create a green cylinder
@@ -104,12 +102,31 @@ void DEWidget::CreateObjects()
     pCompound->addChildShape(trans, pLoad);
     // create a game object using the compound shape
     CreateGameObject(pCompound, 2.0f, btVector3(0.8,0.4,0.1), btVector3(-4, 10.0f, 0.0f));
+
+    //load our stl mesh
+    const char* fileName = "wheel.stl";
+    char relativeFileName[1024];
+    if (b3ResourcePath::findResourcePath(fileName, relativeFileName, 1024))
+    {
+        char pathPrefix[1024];
+        b3FileUtils::extractPath(relativeFileName, pathPrefix, 1024);
+    }
+    GLInstanceGraphicsShape *glmesh = LoadMeshFromSTL(relativeFileName);
+    printf("[INFO] Obj loaded: Extracted %d verticed from obj file [%s]\n", glmesh->m_numvertices, fileName);
+    const GLInstanceVertex& v = glmesh->m_vertices->at(0);
+    btConvexHullShape* shape = new btConvexHullShape((const btScalar*)(&(v.xyzw[0])), glmesh->m_numvertices, sizeof(GLInstanceVertex));
+    float scaling[4] = {10,10,10,1};
+    btVector3 localScaling(scaling[0],scaling[1],scaling[2]);
+    shape->setLocalScaling(localScaling);
+    // initialize the object as a polyhedron
+    shape->initializePolyhedralFeatures();
+    // create the game object using our convex hull shape
+    CreateGameObject(shape, 1.0, btVector3(1,1,1), btVector3(5, 15, 0));
 }
 
 void DEWidget::CollisionEvent(btRigidBody *pBody0, btRigidBody *pBody1) {
     // did the box collide with the trigger?
-    if (pBody0 == m_pBox->GetRigidBody() && pBody1 == m_pTrigger ||
-        pBody1 == m_pBox->GetRigidBody() && pBody0 == m_pTrigger) {
+    if ((pBody0 == m_pBox->GetRigidBody() && pBody1 == m_pTrigger) || (pBody1 == m_pBox->GetRigidBody() && pBody0 == m_pTrigger)) {
         // if yes, create a big green box nearby
         CreateGameObject(new btBoxShape(btVector3(2,2,2)), 2.0, btVector3(0.3, 0.7, 0.3), btVector3(5, 10, 0));
     }
