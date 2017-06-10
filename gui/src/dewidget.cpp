@@ -1,6 +1,7 @@
 #include "dewidget.h"
 #include "b3ResourcePath.h"
 #include "LoadMeshFromSTL.h"
+#include "LoadMeshFromObj.h"
 #include <Bullet3Common/b3FileUtils.h>
 DEWidget::DEWidget():
 OGLWidget(),
@@ -103,7 +104,7 @@ void DEWidget::CreateObjects()
     // create a game object using the compound shape
     CreateGameObject(pCompound, 2.0f, btVector3(0.8,0.4,0.1), btVector3(-4, 10.0f, 0.0f));
 
-    //load our stl mesh
+    //load stl mesh
     const char* fileName = "wheel.stl";
     char relativeFileName[1024];
     if (b3ResourcePath::findResourcePath(fileName, relativeFileName, 1024))
@@ -111,17 +112,41 @@ void DEWidget::CreateObjects()
         char pathPrefix[1024];
         b3FileUtils::extractPath(relativeFileName, pathPrefix, 1024);
     }
-    GLInstanceGraphicsShape *glmesh = LoadMeshFromSTL(relativeFileName);
-    printf("[INFO] Obj loaded: Extracted %d verticed from obj file [%s]\n", glmesh->m_numvertices, fileName);
-    const GLInstanceVertex& v = glmesh->m_vertices->at(0);
-    btConvexHullShape* shape = new btConvexHullShape((const btScalar*)(&(v.xyzw[0])), glmesh->m_numvertices, sizeof(GLInstanceVertex));
+    GLInstanceGraphicsShape *glmesh_stl = LoadMeshFromSTL(relativeFileName);
+    printf("[INFO] STL loaded: Extracted %d verticed from stl file [%s]\n", glmesh_stl->m_numvertices, fileName);
+    const GLInstanceVertex& v_stl = glmesh_stl->m_vertices->at(0);
+    btConvexHullShape* pShape_stl = new btConvexHullShape((const btScalar*)(&(v_stl.xyzw[0])), glmesh_stl->m_numvertices, sizeof(GLInstanceVertex));
     float scaling[4] = {10,10,10,1};
     btVector3 localScaling(scaling[0],scaling[1],scaling[2]);
-    shape->setLocalScaling(localScaling);
+    pShape_stl->setLocalScaling(localScaling);
     // initialize the object as a polyhedron
-    shape->initializePolyhedralFeatures();
+    pShape_stl->initializePolyhedralFeatures();
     // create the game object using our convex hull shape
-    CreateGameObject(shape, 1.0, btVector3(1,1,1), btVector3(5, 15, 0));
+    CreateGameObject(pShape_stl, 1.0, btVector3(1,1,1), btVector3(5, 15, 0));
+
+    //load obj mesh
+    const char* fileName_obj = "duck.obj";//sphere8.obj";//sponza_closed.obj";//sphere8.obj";
+    char relativeFileName_obj[1024];
+    if (b3ResourcePath::findResourcePath(fileName_obj, relativeFileName_obj, 1024))
+    {
+        char pathPrefix[1024];
+        b3FileUtils::extractPath(relativeFileName_obj, pathPrefix, 1024);
+    }
+    GLInstanceGraphicsShape* glmesh_obj = LoadMeshFromObj(relativeFileName_obj, "");
+    printf("[INFO] Obj loaded: Extracted %d verticed from obj file [%s]\n", glmesh_obj->m_numvertices, fileName_obj);
+
+    const GLInstanceVertex& v_obj = glmesh_obj->m_vertices->at(0);
+    btConvexHullShape* pShape_obj = new btConvexHullShape((const btScalar*)(&(v_obj.xyzw[0])), glmesh_obj->m_numvertices, sizeof(GLInstanceVertex));
+
+    float scaling_obj[4] = {1,1,1,1};
+
+    btVector3 localScaling_obj(scaling_obj[0],scaling_obj[1],scaling_obj[2]);
+    pShape_obj->setLocalScaling(localScaling_obj);
+    pShape_obj->optimizeConvexHull();
+    // initialize the object as a polyhedron
+    pShape_obj->initializePolyhedralFeatures();
+    // create the game object using our convex hull shape
+    CreateGameObject(pShape_obj, 1.0, btVector3(1,1,1), btVector3(0, 5, 0));
 }
 
 void DEWidget::CollisionEvent(btRigidBody *pBody0, btRigidBody *pBody1) {

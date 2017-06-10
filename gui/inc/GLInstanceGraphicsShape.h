@@ -9,6 +9,7 @@ struct GLInstanceVertex
 	float normal[3];
 	float uv[2];
 };
+
 struct GLInstanceGraphicsShape
 {
 	b3AlignedObjectArray<GLInstanceVertex>*	m_vertices;
