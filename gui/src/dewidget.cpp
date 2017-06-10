@@ -116,16 +116,24 @@ void DEWidget::CreateObjects()
     printf("[INFO] STL loaded: Extracted %d verticed from stl file [%s]\n", glmesh_stl->m_numvertices, fileName);
     const GLInstanceVertex& v_stl = glmesh_stl->m_vertices->at(0);
     btConvexHullShape* pShape_stl = new btConvexHullShape((const btScalar*)(&(v_stl.xyzw[0])), glmesh_stl->m_numvertices, sizeof(GLInstanceVertex));
-    float scaling[4] = {10,10,10,1};
-    btVector3 localScaling(scaling[0],scaling[1],scaling[2]);
+    float scaling_stl[4] = {10,10,10,1};
+    glmesh_stl->m_scaling[0]=scaling_stl[0];
+    glmesh_stl->m_scaling[1]=scaling_stl[1];
+    glmesh_stl->m_scaling[2]=scaling_stl[2];
+
+    btVector3 localScaling(scaling_stl[0],scaling_stl[1],scaling_stl[2]);
     pShape_stl->setLocalScaling(localScaling);
     // initialize the object as a polyhedron
     pShape_stl->initializePolyhedralFeatures();
     // create the game object using our convex hull shape
-    CreateGameObject(pShape_stl, 1.0, btVector3(1,1,1), btVector3(5, 15, 0));
+    GameObject* pObject_stl =CreateGameObject(pShape_stl, 1.0, btVector3(1,1,1), btVector3(5, 15, 0));
+    // bind the game object with GL mesh object
+    pObject_stl->bindGLShape(glmesh_stl);
+    // set render the glmesh object to be true
+    pObject_stl->SetGLShapeRender(true);
 
     //load obj mesh
-    const char* fileName_obj = "duck.obj";//sphere8.obj";//sponza_closed.obj";//sphere8.obj";
+    const char* fileName_obj = "teddy.obj";//sphere8.obj";//sponza_closed.obj";//sphere8.obj";
     char relativeFileName_obj[1024];
     if (b3ResourcePath::findResourcePath(fileName_obj, relativeFileName_obj, 1024))
     {
@@ -138,15 +146,22 @@ void DEWidget::CreateObjects()
     const GLInstanceVertex& v_obj = glmesh_obj->m_vertices->at(0);
     btConvexHullShape* pShape_obj = new btConvexHullShape((const btScalar*)(&(v_obj.xyzw[0])), glmesh_obj->m_numvertices, sizeof(GLInstanceVertex));
 
-    float scaling_obj[4] = {1,1,1,1};
+    float scaling_obj[4] = {0.1,0.1,0.1,1};
 
+    glmesh_obj->m_scaling[0]=scaling_obj[0];
+    glmesh_obj->m_scaling[1]=scaling_obj[1];
+    glmesh_obj->m_scaling[2]=scaling_obj[2];
     btVector3 localScaling_obj(scaling_obj[0],scaling_obj[1],scaling_obj[2]);
     pShape_obj->setLocalScaling(localScaling_obj);
     pShape_obj->optimizeConvexHull();
     // initialize the object as a polyhedron
     pShape_obj->initializePolyhedralFeatures();
     // create the game object using our convex hull shape
-    CreateGameObject(pShape_obj, 1.0, btVector3(1,1,1), btVector3(0, 5, 0));
+    GameObject* pObject_obj = CreateGameObject(pShape_obj, 1.0, btVector3(1,1,1), btVector3(0, 5, 0));
+    // bind the game object with GL mesh object
+    pObject_obj->bindGLShape(glmesh_obj);
+    // set render the glmesh object to be true
+    pObject_obj->SetGLShapeRender(true);
 }
 
 void DEWidget::CollisionEvent(btRigidBody *pBody0, btRigidBody *pBody1) {

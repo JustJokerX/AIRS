@@ -358,8 +358,13 @@ void OGLWidget::RenderScene() {
     for (unsigned long i=0; i < sum_objs; ++i) {
         // read the transform
         m_objects[i]->GetTransform(transform);
-        // get data from the object and draw it
-        DrawShape(transform, m_objects[i]->GetShape(), m_objects[i]->GetColor());
+        if(m_objects[i]->GetGLShapeRender() == false){
+            // get data from the object and draw it
+            DrawShape(transform, m_objects[i]->GetShape(), m_objects[i]->GetColor());
+        } else{
+            DrawMeshShape(transform,m_objects[i]->GetGLShape(),m_objects[i]->GetColor());
+        }
+
     }
 
     // after rendering all game objects, perform debug rendering
@@ -461,10 +466,25 @@ void OGLWidget::DrawShape(btScalar *transform, const btCollisionShape *pShape, c
     glPopMatrix();
 }
 
-GameObject *OGLWidget::CreateGameObject(btCollisionShape *pShape, const float &mass, const btVector3 &color,
-                                        const btVector3 &initialPosition, const btQuaternion &initialRotation) {
+void OGLWidget::DrawMeshShape(btScalar *transform, const GLInstanceGraphicsShape *pGLShape, const btVector3 &color) {
 
-    GameObject *pObject = new GameObject(pShape, mass, color, initialPosition, initialRotation);
+    // set the color
+    glColor3f(color.x(), color.y(), color.z());
+
+    // push the matrix stack
+    glPushMatrix();
+    glMultMatrixf(transform);
+    glScalef(pGLShape->m_scaling[0],pGLShape->m_scaling[1],pGLShape->m_scaling[2]);
+    //Specific draw something ...
+    DrawMesh(pGLShape);
+    // pop the stack
+    glPopMatrix();
+}
+
+GameObject *OGLWidget::CreateGameObject(btCollisionShape *pShape, const float &mass, const btVector3 &color,
+                                        const btVector3 &initialPosition, const btQuaternion &initialRotation,GLInstanceGraphicsShape *pGLShape) {
+
+    GameObject *pObject = new GameObject(pShape, mass, color, initialPosition, initialRotation, pGLShape);
 
     // push it to the back of the list
     m_objects.push_back(pObject);
@@ -952,5 +972,28 @@ void OGLWidget::DrawConvexHull(const btCollisionShape *shape) {
     // done drawing
     glEnd ();
 }
+
+void OGLWidget::DrawMesh(const GLInstanceGraphicsShape *shape) {
+    // get the polyhedral data from the convex hull
+    if (!shape) return;
+    // begin drawing triangles
+    glBegin (GL_TRIANGLES);
+    // get the indices for the face
+    int all_verts = shape->m_numvertices;
+    for (unsigned long i = 0; i < all_verts; i=i+3){
+        GLInstanceVertex v0 = shape->m_vertices->at(i);
+        GLInstanceVertex v1 = shape->m_vertices->at(i+1);
+        GLInstanceVertex v2 = shape->m_vertices->at(i+2);
+        // draw the triangle
+        glNormal3f(v0.normal[0],v0.normal[1],v0.normal[2]);
+        glVertex3f (v0.xyzw[0], v0.xyzw[1], v0.xyzw[2]);
+        glVertex3f (v1.xyzw[0], v1.xyzw[1], v1.xyzw[2]);
+        glVertex3f (v2.xyzw[0], v2.xyzw[1], v2.xyzw[2]);
+    }
+    // done drawing
+    glEnd ();
+}
+
+
 
 

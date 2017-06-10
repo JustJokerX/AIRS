@@ -2,14 +2,17 @@
 #define _GAMEOBJECT_H_
 
 #include <bullet/btBulletDynamicsCommon.h>
-
+#include "GLInstanceGraphicsShape.h"
 class GameObject {
 public:
-    GameObject(btCollisionShape* pShape, float mass, const btVector3 &color, const btVector3 &initialPosition = btVector3(0,0,0), const btQuaternion &initialRotation = btQuaternion(0,0,1,1));
+    GameObject(btCollisionShape* pShape, float mass, const btVector3 &color, const btVector3 &initialPosition = btVector3(0,0,0),
+               const btQuaternion &initialRotation = btQuaternion(0,0,1,1), GLInstanceGraphicsShape* pGLShape= nullptr);
     ~GameObject();
 
     // accessors
     btCollisionShape* GetShape() { return m_pShape; }
+
+    GLInstanceGraphicsShape* GetGLShape(){ return m_pGLShape;}
 
     btRigidBody* GetRigidBody() { return m_pBody; }
 
@@ -21,10 +24,18 @@ public:
 
     void SetColor(const btVector3 &color) { m_color = color; }
 
+    bool bindGLShape(GLInstanceGraphicsShape* pGLShape, bool bDelOldShape= true);
+
+    bool SetGLShapeRender(bool bGLShapeRender= true);
+
+    bool GetGLShapeRender() { return m_bGLShapeRender; }
+
 protected:
     btCollisionShape*  m_pShape;
-    btRigidBody*    m_pBody;
+    GLInstanceGraphicsShape *  m_pGLShape;
+    btRigidBody*  m_pBody;
     btDefaultMotionState*  m_pMotionState;
-    btVector3      m_color;
+    btVector3     m_color;
+    bool          m_bGLShapeRender;
 };
 #endif

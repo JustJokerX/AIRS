@@ -17,7 +17,7 @@ struct GLInstanceGraphicsShape
 	b3AlignedObjectArray<int>* 		m_indices;
 	int				m_numIndices;
 	float			m_scaling[4];
-    
+
     GLInstanceGraphicsShape()
     :m_vertices(0),
     m_indices(0)
